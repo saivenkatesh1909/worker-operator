@@ -128,7 +128,7 @@ func (r *SliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 	podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(slice.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		log.Error(err, "error getting pods metric list")
+		log.Error(err, "error getting pods metric")
 	}
 	fmt.Println("podMetricsList", podMetricsList.Items)
 
