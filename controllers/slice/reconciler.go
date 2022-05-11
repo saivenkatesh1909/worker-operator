@@ -130,7 +130,7 @@ func (r *SliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err != nil {
 		log.Error(err, "error getting pods metric")
 	}
-	fmt.Println("podMetricsList", podMetricsList.Items)
+	log.Info("Pod", "MetricsList", podMetricsList.Items)
 
 	if slice.Status.DNSIP == "" {
 		log.Info("Finding DNS IP")
