@@ -247,6 +247,12 @@ func main() {
 		setupLog.Error(err, "could not post Cluster Info to Hub")
 	}
 
+	setupLog.Info("starting manager")
+	if err := mgr.Start(ctx); err != nil {
+		setupLog.Error(err, "problem running manager")
+		os.Exit(1)
+	}
+
 	client := mgr.GetClient()
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -269,12 +275,6 @@ func main() {
 				setupLog.Error(err, "could not post Cluster Creds to Hub")
 			}
 		}
-	}
-
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
 	}
 
 }
