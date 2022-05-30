@@ -246,26 +246,18 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "could not post Cluster Info to Hub")
 	}
-
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
-
-	client := mgr.GetClient()
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kubeSliceDashboardSA,
 			Namespace: controllers.ControlPlaneNamespace,
 		},
 	}
-	err = client.Get(ctx, types.NamespacedName{Name: sa.Name, Namespace: controllers.ControlPlaneNamespace}, sa)
+	err = clientForHubMgr.Get(ctx, types.NamespacedName{Name: sa.Name, Namespace: controllers.ControlPlaneNamespace}, sa)
 	if err != nil {
 		setupLog.Error(err, "Error getting service account")
 	} else {
 		secret := &corev1.Secret{}
-		err = client.Get(ctx, types.NamespacedName{Name: sa.Secrets[0].Name, Namespace: controllers.ControlPlaneNamespace}, secret)
+		err = clientForHubMgr.Get(ctx, types.NamespacedName{Name: sa.Secrets[0].Name, Namespace: controllers.ControlPlaneNamespace}, secret)
 		if err != nil {
 			setupLog.Error(err, "Error getting service account's secret")
 		} else {
@@ -276,5 +268,9 @@ func main() {
 			}
 		}
 	}
-
+	setupLog.Info("starting manager")
+	if err := mgr.Start(ctx); err != nil {
+		setupLog.Error(err, "problem running manager")
+		os.Exit(1)
+	}
 }

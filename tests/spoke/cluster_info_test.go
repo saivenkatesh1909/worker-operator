@@ -106,7 +106,7 @@ prefixes:
 		})
 	})
 
-	FContext("With Cluster CR Created at hub cluster", func() {
+	Context("With Cluster CR Created at hub cluster", func() {
 		var ns *corev1.Namespace
 		var cluster *hubv1alpha1.Cluster
 		// var operatorSA *corev1.ServiceAccount
