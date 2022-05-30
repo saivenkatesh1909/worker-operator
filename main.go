@@ -28,13 +28,17 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	sidecar "github.com/kubeslice/worker-operator/internal/gwsidecar"
 	netop "github.com/kubeslice/worker-operator/internal/netop"
 	router "github.com/kubeslice/worker-operator/internal/router"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,6 +51,7 @@ import (
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
+	"github.com/kubeslice/worker-operator/controllers"
 	"github.com/kubeslice/worker-operator/controllers/serviceexport"
 	"github.com/kubeslice/worker-operator/controllers/serviceimport"
 	"github.com/kubeslice/worker-operator/controllers/slice"
@@ -60,8 +65,9 @@ import (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme               = runtime.NewScheme()
+	setupLog             = ctrl.Log.WithName("setup")
+	kubeSliceDashboardSA = "kubeslice-kubernetes-dashboard"
 )
 
 func init() {
@@ -240,9 +246,35 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "could not post Cluster Info to Hub")
 	}
+
+	client := mgr.GetClient()
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kubeSliceDashboardSA,
+			Namespace: controllers.ControlPlaneNamespace,
+		},
+	}
+	err = client.Get(ctx, types.NamespacedName{Name: sa.Name, Namespace: controllers.ControlPlaneNamespace}, sa)
+	if err != nil {
+		setupLog.Error(err, "Error getting service account")
+	} else {
+		secret := &corev1.Secret{}
+		err = client.Get(ctx, types.NamespacedName{Name: sa.Secrets[0].Name, Namespace: controllers.ControlPlaneNamespace}, secret)
+		if err != nil {
+			setupLog.Error(err, "Error getting service account's secret")
+		} else {
+			hostname := mgr.GetConfig().Host
+			err := hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, hostname)
+			if err != nil {
+				setupLog.Error(err, "could not post Cluster Creds to Hub")
+			}
+		}
+	}
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
 }
