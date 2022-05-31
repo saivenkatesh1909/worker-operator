@@ -25,6 +25,7 @@ import (
 	"github.com/kubeslice/worker-operator/internal/cluster"
 	namespacecontroller "github.com/kubeslice/worker-operator/internal/namespace/controllers"
 	"github.com/kubeslice/worker-operator/pkg/events"
+	"k8s.io/client-go/rest"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -246,6 +247,7 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "could not post Cluster Info to Hub")
 	}
+
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kubeSliceDashboardSA,
@@ -261,9 +263,9 @@ func main() {
 		if err != nil {
 			setupLog.Error(err, "Error getting service account's secret")
 		} else {
-			hostname := mgr.GetConfig().Host
-			setupLog.Info("kubeapi server URL", "hostname", hostname)
-			err := hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, hostname)
+			config, _ := rest.InClusterConfig()
+			setupLog.Info("kubeapi server URL", "hostname", config.Host)
+			err := hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, config.Host)
 			if err != nil {
 				setupLog.Error(err, "could not post Cluster Creds to Hub")
 			}

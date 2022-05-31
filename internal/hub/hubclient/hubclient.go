@@ -112,11 +112,8 @@ func PostClusterInfoToHub(ctx context.Context, spokeclient client.Client, hubCli
 
 func PostClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubClient client.Client, secret *corev1.Secret, hostname string) error {
 	secretName := os.Getenv("CLUSTER_NAME") + "-kubernetes-dashboard"
-	err := createClusterSecretOnHub(ctx, secretName, secret, hubClient)
+	err := createorUpdateClusterSecretOnHub(ctx, secretName, secret, hubClient)
 	if err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			return updateClusterCredsToHub(ctx, spokeclient, hubClient, secretName, hostname)
-		}
 		log.Error(err, "Error creating secret on hub cluster")
 		return err
 	}
@@ -124,7 +121,7 @@ func PostClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubCl
 
 }
 
-func createClusterSecretOnHub(ctx context.Context, secretName string, secret *corev1.Secret, hubClient client.Client) error {
+func createorUpdateClusterSecretOnHub(ctx context.Context, secretName string, secret *corev1.Secret, hubClient client.Client) error {
 	if secret.Data == nil {
 		return errors.New("secret data is nil")
 	}
@@ -140,9 +137,13 @@ func createClusterSecretOnHub(ctx context.Context, secretName string, secret *co
 		Data: secretData,
 	}
 	log.Info("creating secret on hub", "hubSecret", hubSecret.Name)
-	return hubClient.Create(ctx, &hubSecret)
-
+	err := hubClient.Create(ctx, &hubSecret)
+	if apierrors.IsAlreadyExists(err) {
+		return hubClient.Update(ctx, &hubSecret)
+	}
+	return err
 }
+
 func updateClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubClient client.Client, secretName, hostname string) error {
 	hubCluster := &hubv1alpha1.Cluster{}
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
