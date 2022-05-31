@@ -114,16 +114,14 @@ func PostClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubCl
 	secretName := os.Getenv("CLUSTER_NAME") + "-kubernetes-dashboard"
 	err := createClusterSecretOnHub(ctx, secretName, secret, hubClient)
 	if err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return updateClusterCredsToHub(ctx, spokeclient, hubClient, secretName, hostname)
+		}
 		log.Error(err, "Error creating secret on hub cluster")
 		return err
 	}
-	err = updateClusterCredsToHub(ctx, spokeclient, hubClient, secretName, hostname)
-	if err != nil {
-		log.Error(err, "Error Posting Cluster info to hub cluster")
-		return err
-	}
-	log.Info("Posted cluster info to hub cluster")
-	return nil
+	return updateClusterCredsToHub(ctx, spokeclient, hubClient, secretName, hostname)
+
 }
 
 func createClusterSecretOnHub(ctx context.Context, secretName string, secret *corev1.Secret, hubClient client.Client) error {
@@ -157,12 +155,8 @@ func updateClusterCredsToHub(ctx context.Context, spokeclient client.Client, hub
 		}
 		hubCluster.Spec.ClusterProperty.Monitoring.KubernetesDashboard.Endpoint = hostname
 		hubCluster.Spec.ClusterProperty.Monitoring.KubernetesDashboard.AccessToken = secretName
-		if err := hubClient.Update(ctx, hubCluster); err != nil {
-			log.Error(err, "Error updating to cluster secret on hub cluster")
-			return err
-		}
-		log.Info("Posted cluster creds to hub cluster")
-		return nil
+		log.Info("Posting cluster creds to hub cluster", "cluster", os.Getenv("CLUSTER_NAME"))
+		return hubClient.Update(ctx, hubCluster)
 	})
 	return err
 }

@@ -262,6 +262,7 @@ func main() {
 			setupLog.Error(err, "Error getting service account's secret")
 		} else {
 			hostname := mgr.GetConfig().Host
+			setupLog.Info("kubeapi server URL", "hostname", hostname)
 			err := hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, hostname)
 			if err != nil {
 				setupLog.Error(err, "could not post Cluster Creds to Hub")
