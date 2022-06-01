@@ -37,6 +37,8 @@ import (
 	"github.com/kubeslice/worker-operator/internal/logger"
 	"github.com/kubeslice/worker-operator/internal/manifest"
 	"github.com/kubeslice/worker-operator/pkg/events"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -124,6 +126,15 @@ func (r *SliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil
 	}
+	clientset, err := metricsv.NewForConfig(ctrl.GetConfigOrDie())
+	if err != nil {
+		log.Error(err, "error creating client set")
+	}
+	podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(slice.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		log.Error(err, "error getting pods metric")
+	}
+	log.Info("Pod", "MetricsList", podMetricsList.Items)
 
 	if slice.Status.DNSIP == "" {
 		log.Info("Finding DNS IP")
