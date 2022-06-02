@@ -17,6 +17,8 @@
 #limitations under the License.
 ##########################################################
 
+FROM bitnami/kubectl:1.20 as kubectl
+
 # Build the manager binary
 FROM golang:1.17 as builder
 
@@ -36,6 +38,8 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY internal/ internal/
 COPY pkg/ pkg/
+# copy kubectl binary
+COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/
 # Build
 RUN go env -w GOPRIVATE=github.com/kubeslice && \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager main.go
