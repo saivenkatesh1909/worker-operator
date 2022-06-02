@@ -21,6 +21,7 @@ package main
 import (
 	"flag"
 	"os"
+	"os/exec"
 
 	"github.com/kubeslice/worker-operator/internal/cluster"
 	namespacecontroller "github.com/kubeslice/worker-operator/internal/namespace/controllers"
@@ -264,11 +265,19 @@ func main() {
 			setupLog.Error(err, "Error getting service account's secret")
 		} else {
 			config, _ := rest.InClusterConfig()
-			setupLog.Info("kubeapi server URL", "hostname", config.Host)
-			err := hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, config.Host)
+			cmd := exec.Command("kubectl", "cluster-info")
+			stdout, err := cmd.Output()
 			if err != nil {
-				setupLog.Error(err, "could not post Cluster Creds to Hub")
+				setupLog.Error(err, "error getting k cluster-info")
+			} else {
+				setupLog.Info("kubeapi server URL", "cluster-info", string(stdout))
+				setupLog.Info("kubeapi server URL", "hostname", config.Host)
+				err = hub.PostClusterCredsToHub(ctx, clientForHubMgr, hubClient, secret, config.Host)
+				if err != nil {
+					setupLog.Error(err, "could not post Cluster Creds to Hub")
+				}
 			}
+
 		}
 	}
 	setupLog.Info("starting manager")
