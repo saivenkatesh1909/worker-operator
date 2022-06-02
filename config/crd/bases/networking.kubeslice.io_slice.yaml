@@ -79,6 +79,11 @@ spec:
                 items:
                   type: string
                 type: array
+              configUpdatedOn:
+                description: ConfigUpdatedOn is the time when Config updated from
+                  backend
+                format: int64
+                type: integer
               dnsIP:
                 description: DNSIP is the IP of Coredns server
                 type: string

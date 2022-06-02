@@ -126,15 +126,27 @@ func (r *SliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil
 	}
-	clientset, err := metricsv.NewForConfig(ctrl.GetConfigOrDie())
-	if err != nil {
-		log.Error(err, "error creating client set")
+	currentTime := time.Now().Unix()
+	configUpdatedOn := slice.Status.ConfigUpdatedOn
+	// should call metric server each 60 seconds
+	if configUpdatedOn+sliceBakendUpdateInterval <= currentTime {
+		clientset, err := metricsv.NewForConfig(ctrl.GetConfigOrDie())
+		if err != nil {
+			log.Error(err, "error creating client set")
+		}
+		podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(slice.Namespace).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			log.Error(err, "error getting pods metric")
+		}
+		log.Info("Pod", "MetricsList every 60 seconds", podMetricsList.Items)
+		log.Info("Pod", "Every 60 seconds", currentTime)
+		slice.Status.ConfigUpdatedOn = currentTime
+		err = r.Status().Update(ctx, slice)
+		if err != nil {
+			log.Error(err, "Failed to update Slice status for config")
+			return ctrl.Result{}, err
+		}
 	}
-	podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(slice.Namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		log.Error(err, "error getting pods metric")
-	}
-	log.Info("Pod", "MetricsList", podMetricsList.Items)
 
 	if slice.Status.DNSIP == "" {
 		log.Info("Finding DNS IP")

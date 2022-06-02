@@ -125,6 +125,8 @@ type SliceStatus struct {
 	ApplicationNamespaces []string `json:"applicationNamespaces,omitempty"`
 	// Slice Allowed Namespace list
 	AllowedNamespaces []string `json:"allowedNamespaces,omitempty"`
+	// ConfigUpdatedOn is the time when Config updated from backend
+	ConfigUpdatedOn int64 `json:"configUpdatedOn,omitempty"`
 }
 
 //+kubebuilder:object:root=true
