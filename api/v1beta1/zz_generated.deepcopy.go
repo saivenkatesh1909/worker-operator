@@ -22,6 +22,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -414,6 +415,16 @@ func (in *SliceConfig) DeepCopyInto(out *SliceConfig) {
 	if in.NamespaceIsolationProfile != nil {
 		in, out := &in.NamespaceIsolationProfile, &out.NamespaceIsolationProfile
 		*out = new(NamespaceIsolationProfile)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.WorkerSliceResourceQuotaStatus != nil {
+		in, out := &in.WorkerSliceResourceQuotaStatus, &out.WorkerSliceResourceQuotaStatus
+		*out = new(v1alpha1.WorkerSliceResourceQuotaStatus)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.WorkerSliceResourceQuotaSpec != nil {
+		in, out := &in.WorkerSliceResourceQuotaSpec, &out.WorkerSliceResourceQuotaSpec
+		*out = new(v1alpha1.WorkerSliceResourceQuotaSpec)
 		(*in).DeepCopyInto(*out)
 	}
 }

@@ -184,6 +184,169 @@ spec:
                   sliceType:
                     description: Type of the slice.
                     type: string
+                  workerSliceResourceQuotaSpec:
+                    description: Slice Resource Quota Spec contains the quota set
+                      for resources of namespace/cluster and slice
+                    properties:
+                      clusterName:
+                        description: ClusterName defines the name of the cluster for
+                          the WorkerResourceQuota
+                        type: string
+                      resourceQuotaProfile:
+                        description: ResourceQuotaProfile defines the resource quota
+                          profile for the slice
+                        properties:
+                          clusterQuota:
+                            description: ClusterQuota defines the configuration for
+                              cluster quota of a resource quota
+                            properties:
+                              namespaceQuota:
+                                description: NamespaceQuota defines the configuration
+                                  for namespace quota of a ClusterQuota
+                                items:
+                                  description: NamespaceQuota defines the configuration
+                                    for namespace quota of a ClusterQuota
+                                  properties:
+                                    enforceQuota:
+                                      default: false
+                                      description: EnforceQuota defines the enforceQuota
+                                        status flag for NamespaceQuota
+                                      type: boolean
+                                    namespace:
+                                      description: Namespace defines the namespace
+                                        of the NamespaceQuota
+                                      type: string
+                                    resources:
+                                      description: Resources defines the configuration
+                                        for resources for NamespaceQuota
+                                      properties:
+                                        cpu:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          description: Cpu defines utilization of
+                                            Cpu resource
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        memory:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          description: Memory defines utilization
+                                            of Memory resource
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                      type: object
+                                  type: object
+                                type: array
+                              resources:
+                                description: Resources defines the configuration for
+                                  resources for ClusterQuota
+                                properties:
+                                  cpu:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Cpu defines utilization of Cpu resource
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  memory:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Memory defines utilization of Memory
+                                      resource
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                type: object
+                            type: object
+                          sliceQuota:
+                            description: SliceQuota defines the configuration for
+                              slice quota of a resource quota
+                            properties:
+                              resources:
+                                description: Resources defines the configuration for
+                                  resources for SliceQuota
+                                properties:
+                                  cpu:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Cpu defines utilization of Cpu resource
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  memory:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Memory defines utilization of Memory
+                                      resource
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                type: object
+                            type: object
+                        type: object
+                      sliceName:
+                        description: SliceName defines the name of the slice for the
+                          WorkerResourceQuota
+                        type: string
+                    type: object
+                  workerSliceResourceQuotaStatus:
+                    description: Slice Resource Quota Status contains the resource
+                      usage of all namespaces associated with slice
+                    properties:
+                      clusterResourceQuotaStatus:
+                        properties:
+                          namespaceResourceQuotaStatus:
+                            items:
+                              properties:
+                                namespace:
+                                  type: string
+                                resourceUsage:
+                                  description: Resource defines the configuration
+                                    for resources for NamespaceQuota
+                                  properties:
+                                    cpu:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      description: Cpu defines utilization of Cpu
+                                        resource
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    memory:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      description: Memory defines utilization of Memory
+                                        resource
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                  type: object
+                              type: object
+                            type: array
+                          resourceUsage:
+                            description: Resource defines the configuration for resources
+                              for NamespaceQuota
+                            properties:
+                              cpu:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: Cpu defines utilization of Cpu resource
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              memory:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: Memory defines utilization of Memory
+                                  resource
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                            type: object
+                        type: object
+                    type: object
                 required:
                 - qosProfileDetails
                 - sliceDisplayName

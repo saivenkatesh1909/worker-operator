@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
 	github.com/kubeslice/apis v0.0.0-20220518055057-d36bcfb73b97
+	github.com/kubeslice/apis-ent v0.0.0-20220602104428-2d6fe24faa7d
 	github.com/kubeslice/gateway-sidecar v0.0.0-20220506071225-eac5ccc17b42
 	github.com/kubeslice/netops v0.0.0-20220506082959-81fef290c265
 	github.com/kubeslice/router-sidecar v1.0.0

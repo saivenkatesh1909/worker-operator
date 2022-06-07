@@ -33,8 +33,8 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	hubv1alpha1 "github.com/kubeslice/apis/pkg/controller/v1alpha1"
-	spokev1alpha1 "github.com/kubeslice/apis/pkg/worker/v1alpha1"
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
 	"github.com/kubeslice/worker-operator/internal/cluster"
 	"github.com/kubeslice/worker-operator/internal/logger"
@@ -405,6 +405,7 @@ func (hubClient *HubClientConfig) UpdateAppPodsList(ctx context.Context, sliceCo
 
 	return hubClient.Status().Update(ctx, sliceConfig)
 }
+
 func (hubClient *HubClientConfig) UpdateAppNamespaces(ctx context.Context, sliceConfigName string, onboardedNamespaces []string) error {
 	log.Info("updating onboardedNamespaces to workersliceconfig", "onboardedNamespaces", onboardedNamespaces)
 	workerSliceConfig := &spokev1alpha1.WorkerSliceConfig{}
@@ -421,5 +422,19 @@ func (hubClient *HubClientConfig) UpdateAppNamespaces(ctx context.Context, slice
 		o[i].Name = ns
 	}
 	workerSliceConfig.Status.OnboardedAppNamespaces = o
+	return hubClient.Status().Update(ctx, workerSliceConfig)
+}
+
+func (hubClient *HubClientConfig) UpdateResourceUsage(ctx context.Context, sliceConfigName string, usage spokev1alpha1.WorkerSliceResourceQuotaStatus) error {
+	log.Info("updating resource usage to worker resource quota", "onboardedNamespaces", "onboardedNamespaces")
+	workerSliceConfig := &spokev1alpha1.WorkerSliceResourceQuota{}
+	err := hubClient.Get(ctx, types.NamespacedName{
+		Name:      sliceConfigName + "-" + os.Getenv("CLUSTER_NAME"),
+		Namespace: ProjectNamespace,
+	}, workerSliceConfig)
+	if err != nil {
+		return err
+	}
+	workerSliceConfig.Status.ClusterResourceQuotaStatus = usage.ClusterResourceQuotaStatus
 	return hubClient.Status().Update(ctx, workerSliceConfig)
 }

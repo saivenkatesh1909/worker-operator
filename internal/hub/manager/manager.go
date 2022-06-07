@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	spokev1alpha1 "github.com/kubeslice/apis/pkg/worker/v1alpha1"
+	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
 	"github.com/kubeslice/worker-operator/internal/hub/controllers"
 	"github.com/kubeslice/worker-operator/internal/logger"
@@ -94,7 +94,7 @@ func Start(meshClient client.Client, ctx context.Context) {
 		os.Exit(1)
 	}
 
-	// create slice-controller recorder
+	// create slice-gateway-controller recorder
 	spokeSliceGatewayEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeSliceGateway-controller"))
 
 	sliceGwReconciler := &controllers.SliceGwReconciler{
@@ -127,6 +127,26 @@ func Start(meshClient client.Client, ctx context.Context) {
 			return object.GetLabels()["worker-cluster"] == ClusterName
 		})).
 		Complete(serviceImportReconciler)
+	if err != nil {
+		log.Error(err, "could not create controller")
+		os.Exit(1)
+	}
+
+	// create slice-resource-quota-controller recorder
+	spokeSliceResourceQuotaEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeSliceGateway-controller"))
+
+	sliceResourceQuotaReconciler := &controllers.SliceResourceQuotaReconciler{
+		MeshClient:    meshClient,
+		EventRecorder: spokeSliceResourceQuotaEventRecorder,
+		ClusterName:   ClusterName,
+	}
+	err = builder.
+		ControllerManagedBy(mgr).
+		For(&spokev1alpha1.WorkerSliceResourceQuota{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			return object.GetLabels()["worker-cluster"] == ClusterName
+		})).
+		Complete(sliceResourceQuotaReconciler)
 	if err != nil {
 		log.Error(err, "could not create controller")
 		os.Exit(1)

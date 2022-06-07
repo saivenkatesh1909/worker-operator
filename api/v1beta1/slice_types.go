@@ -19,6 +19,7 @@
 package v1beta1
 
 import (
+	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -67,6 +68,10 @@ type SliceConfig struct {
 	ExternalGatewayConfig *ExternalGatewayConfig `json:"externalGatewayConfig,omitempty"`
 	// Namespace Isolation profile contains fields related to namespace binding to slice
 	NamespaceIsolationProfile *NamespaceIsolationProfile `json:"namespaceIsolationProfile,omitempty"`
+	// Slice Resource Quota Status contains the resource usage of all namespaces associated with slice
+	WorkerSliceResourceQuotaStatus *spokev1alpha1.WorkerSliceResourceQuotaStatus `json:"workerSliceResourceQuotaStatus,omitempty"`
+	// Slice Resource Quota Spec contains the quota set for resources of namespace/cluster and slice
+	WorkerSliceResourceQuotaSpec *spokev1alpha1.WorkerSliceResourceQuotaSpec `json:"workerSliceResourceQuotaSpec,omitempty"`
 }
 
 // NamespaceIsolationProfile defines the namespace isolation policy for the slice

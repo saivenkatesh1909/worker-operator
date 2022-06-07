@@ -21,6 +21,7 @@ package slice
 import (
 	"context"
 
+	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
 	"github.com/kubeslice/worker-operator/internal/netop"
 
@@ -37,6 +38,7 @@ type NetOpPod struct {
 type HubClientProvider interface {
 	UpdateAppPodsList(ctx context.Context, sliceConfigName string, appPods []kubeslicev1beta1.AppPod) error
 	UpdateAppNamespaces(ctx context.Context, sliceConfigName string, onboardedNamespaces []string) error
+	UpdateResourceUsage(ctx context.Context, sliceConfigName string, onboardedNamespaces spokev1alpha1.WorkerSliceResourceQuotaStatus) error
 }
 
 type WorkerRouterClientProvider interface {

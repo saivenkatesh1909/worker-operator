@@ -447,6 +447,8 @@ github.com/kubeslice/apis v0.0.0-20220510094748-b618e0275a12 h1:g6xQ6O6c6pDfffcH
 github.com/kubeslice/apis v0.0.0-20220510094748-b618e0275a12/go.mod h1:YDSfpIsQM+FtQPaZVGNCTZnlp3viWuQhkjJjIHQdaYs=
 github.com/kubeslice/apis v0.0.0-20220518055057-d36bcfb73b97 h1:dyyVck2Ka3I/jehD21bvSYmn23bWO+kUP8jUDP7FiE8=
 github.com/kubeslice/apis v0.0.0-20220518055057-d36bcfb73b97/go.mod h1:YDSfpIsQM+FtQPaZVGNCTZnlp3viWuQhkjJjIHQdaYs=
+github.com/kubeslice/apis-ent v0.0.0-20220602104428-2d6fe24faa7d h1:Z4rcAwizK8u6vcT4DwSuWV5qndMhUEhUON2ZvnRgJIE=
+github.com/kubeslice/apis-ent v0.0.0-20220602104428-2d6fe24faa7d/go.mod h1:tE1Axxh/DPamDoinXvvFbDi7ppePp5OnM8MexMjvbjk=
 github.com/kubeslice/gateway-sidecar v0.0.0-20220506071225-eac5ccc17b42 h1:5nQK/5H1+tlpAndhanLkh4vI3NS0M1OYXPWXMRVyPCI=
 github.com/kubeslice/gateway-sidecar v0.0.0-20220506071225-eac5ccc17b42/go.mod h1:grTac1B4A6CsMkpjGp493CwDQhD3oExHwYFLKeE3how=
 github.com/kubeslice/gateway-sidecar v0.1.0/go.mod h1:grTac1B4A6CsMkpjGp493CwDQhD3oExHwYFLKeE3how=
