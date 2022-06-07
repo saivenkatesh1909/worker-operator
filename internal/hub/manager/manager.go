@@ -133,7 +133,7 @@ func Start(meshClient client.Client, ctx context.Context) {
 	}
 
 	// create slice-resource-quota-controller recorder
-	spokeSliceResourceQuotaEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeSliceGateway-controller"))
+	spokeSliceResourceQuotaEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeResourceQuota-controller"))
 
 	sliceResourceQuotaReconciler := &controllers.SliceResourceQuotaReconciler{
 		MeshClient:    meshClient,
