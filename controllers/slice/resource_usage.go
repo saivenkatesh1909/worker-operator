@@ -57,7 +57,10 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	var cpuAllNS, memAllNs int64
 	for _, namespace := range namespacesInSlice.Items {
 		// metrics of all the pods of a namespace
-		podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		cpu, mem := getCPUandMemoryMetricsofNs(podMetricsList.Items)
 		cpuAllNS += cpu
 		memAllNs += mem
@@ -65,6 +68,9 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	log.Info("CPU usage of all namespaces", "cpu", cpuAllNS)
 	log.Info("Memory usage of all namespaces", "cpu", memAllNs)
 
+	if cpuAllNS == 0 && memAllNs == 0 {
+		return ctrl.Result{}, nil
+	}
 	if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
 		ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
 		// upadate worker slice usage
