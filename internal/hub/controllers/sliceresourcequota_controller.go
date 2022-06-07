@@ -72,7 +72,7 @@ func (r *SliceResourceQuotaReconciler) Reconcile(ctx context.Context, req reconc
 
 	err = r.MeshClient.Get(ctx, sliceRef, meshSlice)
 	if err != nil {
-		log.Error(err, "slice object not present for slice resource quota. Waiting...", "serviceimport", sliceRQ.Name)
+		log.Error(err, "slice object not present for slice resource quota. Waiting...", "sliceResourceQuota", sliceRQ.Name)
 		return reconcile.Result{
 			RequeueAfter: 30 * time.Second,
 		}, nil
