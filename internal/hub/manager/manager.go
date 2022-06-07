@@ -139,6 +139,7 @@ func Start(meshClient client.Client, ctx context.Context) {
 		MeshClient:    meshClient,
 		EventRecorder: spokeSliceResourceQuotaEventRecorder,
 		ClusterName:   ClusterName,
+		Log:           ctrl.Log.WithName("hub").WithName("controllers").WithName("WorkerSliceResourceQuotaConfig"),
 	}
 	err = builder.
 		ControllerManagedBy(mgr).
