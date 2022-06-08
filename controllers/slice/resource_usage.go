@@ -151,7 +151,8 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 }
 
 func getCPUandMemoryMetricsofNs2(podMetricsList []v1beta1.PodMetrics) (*resource.Quantity, *resource.Quantity) {
-	var nsTotalCPU, nsTotalMem *resource.Quantity
+	nsTotalCPU := &resource.Quantity{}
+	nsTotalMem := &resource.Quantity{}
 	for _, podMetrics := range podMetricsList {
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
