@@ -82,21 +82,22 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	}
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
+		var a, b *resource.Quantity
 		for _, namespace := range namespacesInSlice.Items {
 			// metrics of all the pods of a namespace
 			podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
-			cpu, mem := getCPUandMemoryMetricsofNs(podMetricsList.Items)
-			cpuAsQuantity := resource.NewQuantity(mem, resource.DecimalSI)
-			memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
+			cpuAsQuantity, memAsQuantity := getCPUandMemoryMetricsofNs2(podMetricsList.Items)
+			// cpuAsQuantity := resource.NewQuantity(mem, resource.DecimalSI)
+			// memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
+			a.Add(*cpuAsQuantity)
+			b.Add(*memAsQuantity)
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
 				ResourceUsage: spokev1alpha1.Resource{
-					Cpu:    *cpuAsQuantity,
-					Memory: *memAsQuantity,
+					Cpu:    *a,
+					Memory: *b,
 				},
 				Namespace: namespace.Name,
 			})
-			fmt.Println("cpu", cpuAsQuantity)
-			fmt.Println("mem", memAsQuantity)
 		}
 		cpuAllNSQuantity := resource.NewQuantity(cpuAllNS, resource.DecimalSI)
 		memAllNsQuantity := resource.NewQuantity(memAllNs, resource.BinarySI)
@@ -139,7 +140,6 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
 			nowCpu := usage.Cpu().MilliValue()
-
 			nowMem := usage.Memory().Value()
 			x, update := usage.Memory().AsInt64()
 			fmt.Println("container.Name", container.Name, "mem", x, "nowMem", nowMem, update)
@@ -150,6 +150,19 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 	return nsTotalCPU, nsTotalMem
 }
 
+func getCPUandMemoryMetricsofNs2(podMetricsList []v1beta1.PodMetrics) (*resource.Quantity, *resource.Quantity) {
+	var nsTotalCPU, nsTotalMem *resource.Quantity
+	for _, podMetrics := range podMetricsList {
+		for _, container := range podMetrics.Containers {
+			usage := container.Usage
+			nowCpu := usage.Cpu()
+			nowMem := usage.Memory()
+			nsTotalCPU.Add(*nowCpu)
+			nsTotalMem.Add(*nowMem)
+		}
+	}
+	return nsTotalCPU, nsTotalMem
+}
 func calculatePercentageDiff(a, b int64) int64 {
 	return ((b - a) * 100) / a
 }
