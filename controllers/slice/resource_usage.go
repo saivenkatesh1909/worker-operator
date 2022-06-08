@@ -93,6 +93,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			// memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
 			log.Info("cpuAsQuantity", "cpu", cpuAsQuantity)
 			log.Info("memAsQuantity", "mem", memAsQuantity)
+			fmt.Println("cpuAsQuantity", cpuAsQuantity)
+			fmt.Println("memAsQuantity", memAsQuantity)
 
 			a.Add(cpuAsQuantity)
 			b.Add(memAsQuantity)
@@ -114,8 +116,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			spokev1alpha1.ClusterResourceQuotaStatus{
 				NamespaceResourceQuotaStatus: allNsResourceUsage,
 				ResourcesUsage: spokev1alpha1.Resource{
-					Memory: a,
-					Cpu:    b,
+					Cpu:    a,
+					Memory: b,
 				},
 			}
 
