@@ -82,7 +82,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	}
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
-		var a, b *resource.Quantity
+		a := &resource.Quantity{}
+		b := &resource.Quantity{}
 		for _, namespace := range namespacesInSlice.Items {
 			// metrics of all the pods of a namespace
 			podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
