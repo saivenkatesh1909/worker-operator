@@ -76,11 +76,10 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
+	} else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
+		ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
+		updateResourceUsage = true
 	}
-	//  else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
-	// 	ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
-	// 	updateResourceUsage = true
-	// }
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
 		a := resource.Quantity{}
@@ -93,9 +92,6 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			// memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
 			log.Info("cpuAsQuantity", "cpu", cpuAsQuantity)
 			log.Info("memAsQuantity", "mem", memAsQuantity)
-			fmt.Println("cpuAsQuantity", cpuAsQuantity)
-			fmt.Println("memAsQuantity", memAsQuantity)
-
 			a.Add(cpuAsQuantity)
 			b.Add(memAsQuantity)
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
@@ -133,9 +129,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 }
 
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, cpu, mem int64) bool {
-	fmt.Println("sliceUsage", sliceUsage)
-	cpuUsage := sliceUsage.Cpu.Value()
-	memUsage := sliceUsage.Memory.Value()
+	cpuUsage := sliceUsage.Cpu.MilliValue()
+	memUsage, _ := sliceUsage.Memory.AsInt64()
 	fmt.Println("diff CPU", cpuUsage, cpu)
 	fmt.Println("diff MEM", memUsage, mem)
 	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, cpu) > 5 {
@@ -150,9 +145,7 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
 			nowCpu := usage.Cpu().MilliValue()
-			nowMem := usage.Memory().Value()
-			x, update := usage.Memory().AsInt64()
-			fmt.Println("container.Name", container.Name, "mem", x, "nowMem", nowMem, update)
+			nowMem, _ := usage.Memory().AsInt64()
 			nsTotalCPU += nowCpu
 			nsTotalMem += nowMem
 		}
