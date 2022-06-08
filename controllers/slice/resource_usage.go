@@ -139,7 +139,9 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
 			nowCpu := usage.Cpu().Value()
+			fmt.Println("container.Name",container.Name,"cpu",usage.Cpu(),"cpu.Value()",nowCpu)
 			nowMem := usage.Memory().Value()
+			fmt.Println("container.Name",container.Name,"mem",usage.Memory(),"mem.Value()",nowCpu)
 			nsTotalCPU += nowCpu
 			nsTotalMem += nowMem
 		}
