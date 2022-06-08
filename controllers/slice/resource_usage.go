@@ -20,7 +20,6 @@ package slice
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
@@ -73,8 +72,7 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		return ctrl.Result{}, nil
 	}
 	updateResourceUsage := false
-	a, _ := json.Marshal(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
-	fmt.Println("slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus", string(a))
+
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
@@ -88,8 +86,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			// metrics of all the pods of a namespace
 			podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
 			cpu, mem := getCPUandMemoryMetricsofNs(podMetricsList.Items)
-			memAsQuantity := resource.NewMilliQuantity(cpu, resource.BinarySI)
-			cpuAsQuantity := resource.NewMilliQuantity(mem, resource.DecimalSI)
+			cpuAsQuantity := resource.NewQuantity(mem, resource.DecimalSI)
+			memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
 				ResourceUsage: spokev1alpha1.Resource{
 					Cpu:    *cpuAsQuantity,
@@ -100,8 +98,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			fmt.Println("cpu", cpuAsQuantity)
 			fmt.Println("mem", memAsQuantity)
 		}
-		cpuAllNSQuantity := resource.NewMilliQuantity(cpuAllNS, resource.BinarySI)
-		memAllNsQuantity := resource.NewMilliQuantity(memAllNs, resource.DecimalSI)
+		cpuAllNSQuantity := resource.NewQuantity(cpuAllNS, resource.DecimalSI)
+		memAllNsQuantity := resource.NewQuantity(memAllNs, resource.BinarySI)
 
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.ClusterResourceQuotaStatus =
 			spokev1alpha1.ClusterResourceQuotaStatus{
@@ -125,11 +123,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, cpu, mem int64) bool {
 	fmt.Println("sliceUsage", sliceUsage)
-	fmt.Println("sliceUsageCpu", sliceUsage.Cpu.Value())
-	fmt.Println("sliceUsage.Memory", sliceUsage.Memory.Value())
-
-	cpuUsage := sliceUsage.Cpu.MilliValue()
-	memUsage := sliceUsage.Memory.MilliValue()
+	cpuUsage := sliceUsage.Cpu.Value()
+	memUsage := sliceUsage.Memory.Value()
 	fmt.Println("diff CPU", cpuUsage, cpu)
 	fmt.Println("diff MEM", memUsage, mem)
 	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, cpu) > 5 {
