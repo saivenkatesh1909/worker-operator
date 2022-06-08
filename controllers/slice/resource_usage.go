@@ -68,15 +68,18 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	log.Info("CPU usage of all namespaces", "cpu", cpuAllNS)
 	log.Info("Memory usage of all namespaces", "mem", memAllNs)
 
-	if cpuAllNS == 0 && memAllNs == 0 {
+	if cpuAllNS == 0 && memAllNs == 0 { // no current usage
 		return ctrl.Result{}, nil
 	}
+	updateResourceUsage := false
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
-	}
-	if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
+		updateResourceUsage = true
+	} else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
 		ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
-		// upadate worker slice usage
+		updateResourceUsage = true
+	}
+	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
 		for _, namespace := range namespacesInSlice.Items {
 			// metrics of all the pods of a namespace
@@ -106,13 +109,9 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			}
 
 		r.HubClient.UpdateResourceUsage(ctx, slice.Name, *slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
+		slice.Status.ConfigUpdatedOn = currentTime
+		r.Status().Update(ctx, slice)
 	}
-	if err != nil {
-		log.Error(err, "error getting pods metric")
-	}
-	log.Info("Pod", "Every 60 seconds", currentTime)
-	slice.Status.ConfigUpdatedOn = currentTime
-	r.Status().Update(ctx, slice)
 	return ctrl.Result{}, nil
 }
 
