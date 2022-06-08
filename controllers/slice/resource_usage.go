@@ -76,39 +76,46 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
-	} else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
-		ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
-		updateResourceUsage = true
 	}
+	//  else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
+	// 	ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
+	// 	updateResourceUsage = true
+	// }
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
-		a := &resource.Quantity{}
-		b := &resource.Quantity{}
+		a := resource.Quantity{}
+		b := resource.Quantity{}
 		for _, namespace := range namespacesInSlice.Items {
 			// metrics of all the pods of a namespace
 			podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
 			cpuAsQuantity, memAsQuantity := getCPUandMemoryMetricsofNs2(podMetricsList.Items)
 			// cpuAsQuantity := resource.NewQuantity(mem, resource.DecimalSI)
 			// memAsQuantity := resource.NewQuantity(cpu, resource.BinarySI)
-			a.Add(*cpuAsQuantity)
-			b.Add(*memAsQuantity)
+			log.Info("cpuAsQuantity", "cpu", cpuAsQuantity)
+			log.Info("memAsQuantity", "mem", memAsQuantity)
+
+			a.Add(cpuAsQuantity)
+			b.Add(memAsQuantity)
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
 				ResourceUsage: spokev1alpha1.Resource{
-					Cpu:    *a,
-					Memory: *b,
+					Cpu:    cpuAsQuantity,
+					Memory: memAsQuantity,
 				},
 				Namespace: namespace.Name,
 			})
 		}
-		cpuAllNSQuantity := resource.NewQuantity(cpuAllNS, resource.DecimalSI)
-		memAllNsQuantity := resource.NewQuantity(memAllNs, resource.BinarySI)
+
+		log.Info("ALL cpuAsQuantity", "cpu", a)
+		log.Info("ALL memAsQuantity", "mem", b)
+		// cpuAllNSQuantity := resource.NewQuantity(cpuAllNS, resource.DecimalSI)
+		// memAllNsQuantity := resource.NewQuantity(memAllNs, resource.BinarySI)
 
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.ClusterResourceQuotaStatus =
 			spokev1alpha1.ClusterResourceQuotaStatus{
 				NamespaceResourceQuotaStatus: allNsResourceUsage,
 				ResourcesUsage: spokev1alpha1.Resource{
-					Memory: *memAllNsQuantity,
-					Cpu:    *cpuAllNSQuantity,
+					Memory: a,
+					Cpu:    b,
 				},
 			}
 
@@ -151,9 +158,9 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 	return nsTotalCPU, nsTotalMem
 }
 
-func getCPUandMemoryMetricsofNs2(podMetricsList []v1beta1.PodMetrics) (*resource.Quantity, *resource.Quantity) {
-	nsTotalCPU := &resource.Quantity{}
-	nsTotalMem := &resource.Quantity{}
+func getCPUandMemoryMetricsofNs2(podMetricsList []v1beta1.PodMetrics) (resource.Quantity, resource.Quantity) {
+	nsTotalCPU := resource.Quantity{}
+	nsTotalMem := resource.Quantity{}
 	for _, podMetrics := range podMetricsList {
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
