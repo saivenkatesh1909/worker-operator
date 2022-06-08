@@ -123,6 +123,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, cpu, mem int64) bool {
 	cpuUsage, _ := sliceUsage.Cpu.AsInt64()
 	memUsage, _ := sliceUsage.Memory.AsInt64()
+	fmt.Println("diff CPU", cpuUsage, cpu)
+	fmt.Println("diff MEM", memUsage, mem)
 	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, cpu) > 5 {
 		return true
 	}
