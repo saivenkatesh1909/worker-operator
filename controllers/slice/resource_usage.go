@@ -128,10 +128,10 @@ func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource
 	fmt.Println("sliceUsageCpu", sliceUsage.Cpu)
 	fmt.Println("sliceUsage.Memory", sliceUsage.Memory)
 
-	cpuUsage, _ := sliceUsage.Cpu.AsInt64()
-	memUsage, _ := sliceUsage.Memory.AsInt64()
-	fmt.Println("diff CPU", cpuUsage, cpu)
-	fmt.Println("diff MEM", memUsage, mem)
+	cpuUsage, updateC := sliceUsage.Cpu.AsInt64()
+	memUsage, updateM := sliceUsage.Memory.AsInt64()
+	fmt.Println("diff CPU", cpuUsage, cpu, updateC)
+	fmt.Println("diff MEM", memUsage, mem, updateM)
 	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, cpu) > 5 {
 		return true
 	}
