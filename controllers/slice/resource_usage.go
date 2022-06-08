@@ -20,6 +20,7 @@ package slice
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
@@ -72,7 +73,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		return ctrl.Result{}, nil
 	}
 	updateResourceUsage := false
-	fmt.Println("slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus", slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
+	a, _ := json.Marshal(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
+	fmt.Println("slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus", string(a))
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
@@ -122,6 +124,10 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 }
 
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, cpu, mem int64) bool {
+	fmt.Println("sliceUsage", sliceUsage)
+	fmt.Println("sliceUsageCpu", sliceUsage.Cpu)
+	fmt.Println("sliceUsage.Memory", sliceUsage.Memory)
+
 	cpuUsage, _ := sliceUsage.Cpu.AsInt64()
 	memUsage, _ := sliceUsage.Memory.AsInt64()
 	fmt.Println("diff CPU", cpuUsage, cpu)
