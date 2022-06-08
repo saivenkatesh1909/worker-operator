@@ -66,10 +66,13 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		memAllNs += mem
 	}
 	log.Info("CPU usage of all namespaces", "cpu", cpuAllNS)
-	log.Info("Memory usage of all namespaces", "cpu", memAllNs)
+	log.Info("Memory usage of all namespaces", "mem", memAllNs)
 
 	if cpuAllNS == 0 && memAllNs == 0 {
 		return ctrl.Result{}, nil
+	}
+	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
+		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 	}
 	if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
 		ClusterResourceQuotaStatus.ResourcesUsage, cpuAllNS, memAllNs) {
