@@ -426,7 +426,7 @@ func (hubClient *HubClientConfig) UpdateAppNamespaces(ctx context.Context, slice
 }
 
 func (hubClient *HubClientConfig) UpdateResourceUsage(ctx context.Context, sliceConfigName string, usage spokev1alpha1.WorkerSliceResourceQuotaStatus) error {
-	log.Info("updating resource usage to worker resource quota", "onboardedNamespaces", "onboardedNamespaces")
+	log.Info("updating resource usage to worker resource quota", "sliceResourceQuota", sliceConfigName)
 	workerSliceConfig := &spokev1alpha1.WorkerSliceResourceQuota{}
 	err := hubClient.Get(ctx, types.NamespacedName{
 		Name:      sliceConfigName + "-" + os.Getenv("CLUSTER_NAME"),

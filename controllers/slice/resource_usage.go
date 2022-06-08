@@ -109,7 +109,11 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 				},
 			}
 
-		r.HubClient.UpdateResourceUsage(ctx, slice.Name, *slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
+		err := r.HubClient.UpdateResourceUsage(ctx, slice.Name, *slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
+		if err != nil {
+			log.Error(err, "error updating hub worker slice resource quota")
+			return ctrl.Result{}, err
+		}
 		slice.Status.ConfigUpdatedOn = currentTime
 		r.Status().Update(ctx, slice)
 	}
