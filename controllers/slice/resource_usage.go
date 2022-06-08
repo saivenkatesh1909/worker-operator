@@ -142,7 +142,7 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 			cpuint,b := usage.Cpu().AsInt64()
 			fmt.Println("container.Name",container.Name,"cpu",usage.Cpu(),"cpu.Value()",nowCpu,"int64","cpuint",cpuint,"b",b)
 			nowMem := usage.Memory().Value()
-			x := resource.NewQuantity(nowMem,resource.BinarySI)
+			x := resource.NewMilliQuantity(nowMem,resource.BinarySI)
 			fmt.Println("x",x)
 			fmt.Println("container.Name",container.Name,"mem",usage.Memory(),"mem.Value()",nowCpu)
 			nsTotalCPU += nowCpu
