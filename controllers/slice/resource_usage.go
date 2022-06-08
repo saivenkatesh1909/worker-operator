@@ -72,6 +72,7 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		return ctrl.Result{}, nil
 	}
 	updateResourceUsage := false
+	fmt.Println("slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus", slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
