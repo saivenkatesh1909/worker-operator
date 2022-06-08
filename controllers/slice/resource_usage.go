@@ -92,6 +92,7 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 					Cpu:    *cpuAsQuantity,
 					Memory: *memAsQuantity,
 				},
+				Namespace: namespace.Name,
 			})
 			fmt.Println("cpu", cpuAsQuantity)
 			fmt.Println("mem", memAsQuantity)
