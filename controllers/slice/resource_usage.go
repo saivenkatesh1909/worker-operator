@@ -128,8 +128,8 @@ func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource
 	fmt.Println("sliceUsageCpu", sliceUsage.Cpu.Value())
 	fmt.Println("sliceUsage.Memory", sliceUsage.Memory.Value())
 
-	cpuUsage := sliceUsage.Cpu.AsDec().UnscaledBig().Int64()
-	memUsage := sliceUsage.Memory.AsDec().UnscaledBig().Int64()
+	cpuUsage := sliceUsage.Cpu.Value()
+	memUsage := sliceUsage.Memory.Value()
 	fmt.Println("diff CPU", cpuUsage, cpu)
 	fmt.Println("diff MEM", memUsage, mem)
 	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, cpu) > 5 {
@@ -143,8 +143,8 @@ func getCPUandMemoryMetricsofNs(podMetricsList []v1beta1.PodMetrics) (int64, int
 	for _, podMetrics := range podMetricsList {
 		for _, container := range podMetrics.Containers {
 			usage := container.Usage
-			nowCpu := usage.Cpu().MilliValue()
-			nowMem, _ := usage.Memory().AsInt64()
+			nowCpu := usage.Cpu().Value()
+			nowMem := usage.Memory().Value()
 			nsTotalCPU += nowCpu
 			nsTotalMem += nowMem
 		}
