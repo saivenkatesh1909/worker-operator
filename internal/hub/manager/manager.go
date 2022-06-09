@@ -32,7 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
+	spokev1alpha1ent "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
+	spokev1alpha1 "github.com/kubeslice/apis/pkg/worker/v1alpha1"
+
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
 	"github.com/kubeslice/worker-operator/internal/hub/controllers"
 	"github.com/kubeslice/worker-operator/internal/logger"
@@ -47,6 +49,7 @@ func init() {
 	clientgoscheme.AddToScheme(scheme)
 	utilruntime.Must(spokev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(kubeslicev1beta1.AddToScheme(scheme))
+	utilruntime.Must(spokev1alpha1ent.AddToScheme(scheme))
 }
 
 func Start(meshClient client.Client, ctx context.Context) {
@@ -143,7 +146,7 @@ func Start(meshClient client.Client, ctx context.Context) {
 	}
 	err = builder.
 		ControllerManagedBy(mgr).
-		For(&spokev1alpha1.WorkerSliceResourceQuota{}).
+		For(&spokev1alpha1ent.WorkerSliceResourceQuota{}).
 		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return object.GetLabels()["worker-cluster"] == ClusterName
 		})).
