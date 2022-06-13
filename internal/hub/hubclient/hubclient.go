@@ -20,10 +20,12 @@ package hub
 
 import (
 	"context"
+	"errors"
 	"os"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -107,6 +109,58 @@ func PostClusterInfoToHub(ctx context.Context, spokeclient client.Client, hubCli
 	}
 	log.Info("Posted cluster info to hub cluster")
 	return nil
+}
+
+func PostClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubClient client.Client, secret *corev1.Secret) error {
+	secretName := os.Getenv("CLUSTER_NAME") + "-kubernetes-dashboard"
+	err := createorUpdateClusterSecretOnHub(ctx, secretName, secret, hubClient)
+	if err != nil {
+		log.Error(err, "Error creating secret on hub cluster")
+		return err
+	}
+	return updateClusterCredsToHub(ctx, spokeclient, hubClient, secretName)
+
+}
+
+func createorUpdateClusterSecretOnHub(ctx context.Context, secretName string, secret *corev1.Secret, hubClient client.Client) error {
+	if secret.Data == nil {
+		return errors.New("secret data is nil")
+	}
+	secretData := map[string][]byte{
+		"token":  secret.Data["token"],
+		"ca.crt": secret.Data["ca.crt"],
+	}
+	hubSecret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: os.Getenv("HUB_PROJECT_NAMESPACE"),
+		},
+		Data: secretData,
+	}
+	log.Info("creating secret on hub", "hubSecret", hubSecret.Name)
+	err := hubClient.Create(ctx, &hubSecret)
+	if apierrors.IsAlreadyExists(err) {
+		return hubClient.Update(ctx, &hubSecret)
+	}
+	return err
+}
+
+func updateClusterCredsToHub(ctx context.Context, spokeclient client.Client, hubClient client.Client, secretName string) error {
+	hubCluster := &hubv1alpha1.Cluster{}
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := hubClient.Get(ctx, types.NamespacedName{
+			Name:      os.Getenv("CLUSTER_NAME"),
+			Namespace: os.Getenv("HUB_PROJECT_NAMESPACE"),
+		}, hubCluster)
+		if err != nil {
+			return err
+		}
+		hubCluster.Spec.ClusterProperty.Monitoring.KubernetesDashboard.Endpoint = os.Getenv("CLUSTER_ENDPOINT")
+		hubCluster.Spec.ClusterProperty.Monitoring.KubernetesDashboard.AccessToken = secretName
+		log.Info("Posting cluster creds to hub cluster", "cluster", os.Getenv("CLUSTER_NAME"))
+		return hubClient.Update(ctx, hubCluster)
+	})
+	return err
 }
 
 func updateClusterInfoToHub(ctx context.Context, spokeclient client.Client, hubClient client.Client, clusterName, nodeIP string, namespace string) error {
@@ -298,7 +352,7 @@ func (hubClient *HubClientConfig) UpdateServiceExportEndpointForIngressGw(ctx co
 		Namespace: ProjectNamespace,
 	}, hubSvcEx)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			hubSvcExObj := &hubv1alpha1.ServiceExportConfig{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getHubServiceExportObjName(serviceexport),
@@ -340,7 +394,7 @@ func (hubClient *HubClientConfig) UpdateServiceExport(ctx context.Context, servi
 		Namespace: ProjectNamespace,
 	}, hubSvcEx)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			err = hubClient.Create(ctx, getHubServiceExportObj(serviceexport))
 			if err != nil {
 				return err
@@ -367,7 +421,7 @@ func (hubClient *HubClientConfig) DeleteServiceExport(ctx context.Context, servi
 		Namespace: ProjectNamespace,
 	}, hubSvcEx)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 		return err
