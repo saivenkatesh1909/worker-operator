@@ -34,6 +34,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func (m *SliceReconciler) getNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error) {
+	clientset, err := metricsv.NewForConfig(ctrl.GetConfigOrDie())
+	if err != nil {
+		//log.Error(err, "error creating client set")
+		return nil, err
+	}
+	return clientset.MetricsV1beta1().PodMetricses(namespace).List(context.TODO(), metav1.ListOptions{})
+}
+
+type TestInt interface {
+	getNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error)
+}
+
 func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, slice *kubeslicev1beta1.Slice, currentTime, configUpdatedOn int64) (ctrl.Result, error) {
 	log := logger.FromContext(ctx).WithValues("type", "resource_usage")
 	// Get the list of existing namespaces that are part of slice
@@ -57,7 +70,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	var totalCPUAsInt, totalMemAsInt int64
 	for _, namespace := range namespacesInSlice.Items {
 		// metrics of all the pods of a namespace
-		podMetricsList, err := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		var t TestInt = r
+		podMetricsList, err := t.getNamespaceMetrics(namespace.Name)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -73,10 +87,11 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
-	} else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
-		ClusterResourceQuotaStatus.ResourcesUsage, totalCPUAsInt, totalMemAsInt) {
-		updateResourceUsage = true
 	}
+	// else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
+	// 	ClusterResourceQuotaStatus.ResourcesUsage, totalCPUAsInt, totalMemAsInt) {
+	// 	updateResourceUsage = true
+	// }
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
 		cpuAllNS := resource.Quantity{}

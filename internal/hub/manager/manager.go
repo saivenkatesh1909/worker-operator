@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	spokev1alpha1ent "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	spokev1alpha1 "github.com/kubeslice/apis/pkg/worker/v1alpha1"
 
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
@@ -49,7 +48,6 @@ func init() {
 	clientgoscheme.AddToScheme(scheme)
 	utilruntime.Must(spokev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(kubeslicev1beta1.AddToScheme(scheme))
-	utilruntime.Must(spokev1alpha1ent.AddToScheme(scheme))
 }
 
 func Start(meshClient client.Client, ctx context.Context) {
@@ -136,25 +134,25 @@ func Start(meshClient client.Client, ctx context.Context) {
 	}
 
 	// // create slice-resource-quota-controller recorder
-	spokeSliceResourceQuotaEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeResourceQuota-controller"))
+	// spokeSliceResourceQuotaEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("spokeResourceQuota-controller"))
 
-	sliceResourceQuotaReconciler := &controllers.SliceResourceQuotaReconciler{
-		MeshClient:    meshClient,
-		EventRecorder: spokeSliceResourceQuotaEventRecorder,
-		ClusterName:   ClusterName,
-		Log:           ctrl.Log.WithName("hub").WithName("controllers").WithName("WorkerSliceResourceQuotaConfig"),
-	}
-	err = builder.
-		ControllerManagedBy(mgr).
-		For(&spokev1alpha1ent.WorkerSliceResourceQuota{}).
-		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return object.GetLabels()["worker-cluster"] == ClusterName
-		})).
-		Complete(sliceResourceQuotaReconciler)
-	if err != nil {
-		log.Error(err, "could not create controller")
-		os.Exit(1)
-	}
+	// sliceResourceQuotaReconciler := &controllers.SliceResourceQuotaReconciler{
+	// 	MeshClient:    meshClient,
+	// 	EventRecorder: spokeSliceResourceQuotaEventRecorder,
+	// 	ClusterName:   ClusterName,
+	// 	Log:           ctrl.Log.WithName("hub").WithName("controllers").WithName("WorkerSliceResourceQuotaConfig"),
+	// }
+	// err = builder.
+	// 	ControllerManagedBy(mgr).
+	// 	For(&spokev1alpha1.WorkerSliceResourceQuota{}).
+	// 	WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+	// 		return object.GetLabels()["worker-cluster"] == ClusterName
+	// 	})).
+	// 	Complete(sliceResourceQuotaReconciler)
+	// if err != nil {
+	// 	log.Error(err, "could not create controller")
+	// 	os.Exit(1)
+	// }
 
 	if err := mgr.Start(ctx); err != nil {
 		log.Error(err, "could not start manager")
