@@ -93,6 +93,8 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		ClusterResourceQuotaStatus.ResourcesUsage, currentAllNsCPU, currentAllNsMem) {
 		updateResourceUsage = true
 	}
+	log.Info("CPU usage of all namespaces", "cpu", currentAllNsCPU)
+	log.Info("Memory usage of all namespaces", "mem", currentAllNsMem)
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
 		for _, namespace := range namespacesInSlice.Items {
@@ -109,8 +111,7 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 				Namespace: namespace.Name,
 			})
 		}
-		log.Info("CPU usage of all namespaces", "cpu", currentAllNsCPU)
-		log.Info("Memory usage of all namespaces", "mem", currentAllNsMem)
+
 		cpuInMilliCoresAllNs := resource.NewMilliQuantity(currentAllNsCPU.MilliValue(), resource.DecimalSI)
 		memAsMIAllNs := strconv.Itoa(int(currentAllNsMem.ScaledValue(resource.Mega)))
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.ClusterResourceQuotaStatus =
@@ -136,10 +137,10 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, currentcpu, currentmem resource.Quantity) bool {
 	memUsage := sliceUsage.Memory.ScaledValue(resource.Kilo)
 	cpuUsage := sliceUsage.Cpu.ScaledValue(resource.Nano)
-	fmt.Println("cpuUsage", cpuUsage)
 	fmt.Println("memUsage", memUsage)
-	curremtMemUsage := currentcpu.ScaledValue(resource.Kilo)
-	currentCPUUsage := currentmem.ScaledValue(resource.Nano)
+	fmt.Println("cpuUsage", cpuUsage)
+	curremtMemUsage := currentmem.ScaledValue(resource.Kilo)
+	currentCPUUsage := currentcpu.ScaledValue(resource.Nano)
 	fmt.Println("currentCPUUsage", currentCPUUsage)
 	fmt.Println("curremtMemUsage", curremtMemUsage)
 	if calculatePercentageDiff(cpuUsage, currentCPUUsage) > 5 || calculatePercentageDiff(memUsage, curremtMemUsage) > 5 {
