@@ -21,6 +21,7 @@ package slice
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
@@ -102,25 +103,28 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			cpuAsQuantity, memAsQuantity := getCPUandMemoryMetricsResource(podMetricsList.Items)
 			cpuAllNS.Add(cpuAsQuantity)
 			memAllNs.Add(memAsQuantity)
+			cpuInMilliCores := resource.NewMilliQuantity(cpuAsQuantity.MilliValue(), resource.DecimalSI)
+			memAsMI := strconv.Itoa(int(memAsQuantity.ScaledValue(resource.Mega)))
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
 				ResourceUsage: spokev1alpha1.Resource{
-					Cpu:    cpuAsQuantity,
-					Memory: memAsQuantity,
+					Cpu:    *cpuInMilliCores,
+					Memory: resource.MustParse(memAsMI + "Mi"),
 				},
 				Namespace: namespace.Name,
 			})
 		}
 		log.Info("CPU usage of all namespaces", "cpu", cpuAllNS)
 		log.Info("Memory usage of all namespaces", "mem", memAllNs)
+		cpuInMilliCoresAllNs := resource.NewMilliQuantity(cpuAllNS.MilliValue(), resource.DecimalSI)
+		memAsMIAllNs := strconv.Itoa(int(memAllNs.ScaledValue(resource.Mega)))
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.ClusterResourceQuotaStatus =
 			spokev1alpha1.ClusterResourceQuotaStatus{
 				NamespaceResourceQuotaStatus: allNsResourceUsage,
 				ResourcesUsage: spokev1alpha1.Resource{
-					Cpu:    cpuAllNS,
-					Memory: memAllNs,
+					Cpu:    *cpuInMilliCoresAllNs,
+					Memory: resource.MustParse(memAsMIAllNs + "Mi"),
 				},
 			}
-
 		err := r.HubClient.UpdateResourceUsage(ctx, slice.Name, *slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus)
 		if err != nil {
 			log.Error(err, "error updating hub worker slice resource quota")
