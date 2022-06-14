@@ -130,6 +130,11 @@ func main() {
 		setupLog.Error(err, "could not create spoke netop client for slice gateway reconciler")
 		os.Exit(1)
 	}
+	metricServerClient, err := slice.NewMetricServerClientProvider()
+	if err != nil {
+		setupLog.Error(err, "could not create spoke netop client for slice gateway reconciler")
+		os.Exit(1)
+	}
 	sliceEventRecorder := events.NewEventRecorder(mgr.GetEventRecorderFor("slice-controller"))
 	if err = (&slice.SliceReconciler{
 		Client:             mgr.GetClient(),
@@ -139,6 +144,7 @@ func main() {
 		EventRecorder:      sliceEventRecorder,
 		WorkerRouterClient: workerRouterClient,
 		WorkerNetOpClient:  workerNetOPClient,
+		MetricServerClient: metricServerClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Slice")
 		os.Exit(1)

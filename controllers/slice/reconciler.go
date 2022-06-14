@@ -52,6 +52,7 @@ type SliceReconciler struct {
 	HubClient          HubClientProvider
 	WorkerRouterClient WorkerRouterClientProvider
 	WorkerNetOpClient  WorkerNetOpClientProvider
+	MetricServerClient MetricServerProvider
 }
 
 //+kubebuilder:rbac:groups=networking.kubeslice.io,resources=slice,verbs=get;list;watch;create;update;patch;delete

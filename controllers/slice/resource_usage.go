@@ -35,17 +35,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (m *SliceReconciler) getNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error) {
+type metricServer struct {
+}
+
+func NewMetricServerClientProvider() (*metricServer, error) {
+	return &metricServer{}, nil
+}
+func (m *metricServer) GetNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error) {
 	clientset, err := metricsv.NewForConfig(ctrl.GetConfigOrDie())
 	if err != nil {
-		//log.Error(err, "error creating client set")
 		return nil, err
 	}
 	return clientset.MetricsV1beta1().PodMetricses(namespace).List(context.TODO(), metav1.ListOptions{})
-}
-
-type TestInt interface {
-	getNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error)
 }
 
 func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, slice *kubeslicev1beta1.Slice, currentTime, configUpdatedOn int64) (ctrl.Result, error) {
@@ -68,41 +69,36 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	if err != nil {
 		log.Error(err, "error creating client set")
 	}
-	var totalCPUAsInt, totalMemAsInt int64
+	currentAllNsCPU := resource.Quantity{}
+	currentAllNsMem := resource.Quantity{}
 	for _, namespace := range namespacesInSlice.Items {
 		// metrics of all the pods of a namespace
-		var t TestInt = r
-		podMetricsList, err := t.getNamespaceMetrics(namespace.Name)
+		podMetricsList, err := r.MetricServerClient.GetNamespaceMetrics(namespace.Name)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		cpu, mem := getCPUandMemoryMetricsAsInt(podMetricsList.Items)
-		totalCPUAsInt += cpu
-		totalMemAsInt += mem
+		cpu, mem := getCPUandMemoryMetricsResource(podMetricsList.Items)
+		currentAllNsCPU.Add(cpu)
+		currentAllNsMem.Add(mem)
 	}
 
-	if totalCPUAsInt == 0 && totalMemAsInt == 0 { // no current usage
-		return ctrl.Result{}, nil
-	}
+	// if currentAllNsCPU == 0 && currentAllNsMem == 0 { // no current usage
+	// 	return ctrl.Result{}, nil
+	// }
 	updateResourceUsage := false
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
 		updateResourceUsage = true
+	} else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
+		ClusterResourceQuotaStatus.ResourcesUsage, currentAllNsCPU, currentAllNsMem) {
+		updateResourceUsage = true
 	}
-	// else if checkToUpdateControllerSliceResourceQuota(slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.
-	// 	ClusterResourceQuotaStatus.ResourcesUsage, totalCPUAsInt, totalMemAsInt) {
-	// 	updateResourceUsage = true
-	// }
 	if updateResourceUsage {
 		allNsResourceUsage := []spokev1alpha1.NamespaceResourceQuotaStatus{}
-		cpuAllNS := resource.Quantity{}
-		memAllNs := resource.Quantity{}
 		for _, namespace := range namespacesInSlice.Items {
 			// metrics of all the pods of a namespace
 			podMetricsList, _ := clientset.MetricsV1beta1().PodMetricses(namespace.Name).List(context.TODO(), metav1.ListOptions{})
 			cpuAsQuantity, memAsQuantity := getCPUandMemoryMetricsResource(podMetricsList.Items)
-			cpuAllNS.Add(cpuAsQuantity)
-			memAllNs.Add(memAsQuantity)
 			cpuInMilliCores := resource.NewMilliQuantity(cpuAsQuantity.MilliValue(), resource.DecimalSI)
 			memAsMI := strconv.Itoa(int(memAsQuantity.ScaledValue(resource.Mega)))
 			allNsResourceUsage = append(allNsResourceUsage, spokev1alpha1.NamespaceResourceQuotaStatus{
@@ -113,14 +109,14 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 				Namespace: namespace.Name,
 			})
 		}
-		log.Info("CPU usage of all namespaces", "cpu", cpuAllNS)
-		log.Info("Memory usage of all namespaces", "mem", memAllNs)
-		cpuInMilliCoresAllNs := resource.NewMilliQuantity(cpuAllNS.MilliValue(), resource.DecimalSI)
-		memAsMIAllNs := strconv.Itoa(int(memAllNs.ScaledValue(resource.Mega)))
+		log.Info("CPU usage of all namespaces", "cpu", currentAllNsCPU)
+		log.Info("Memory usage of all namespaces", "mem", currentAllNsMem)
+		cpuInMilliCoresAllNs := resource.NewMilliQuantity(currentAllNsCPU.MilliValue(), resource.DecimalSI)
+		memAsMIAllNs := strconv.Itoa(int(currentAllNsMem.ScaledValue(resource.Mega)))
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus.ClusterResourceQuotaStatus =
 			spokev1alpha1.ClusterResourceQuotaStatus{
 				NamespaceResourceQuotaStatus: allNsResourceUsage,
-				ResourcesUsage: spokev1alpha1.Resource{
+				ResourcesUsage: spokev1alpha1.Resource{ // all namespace collectively
 					Cpu:    *cpuInMilliCoresAllNs,
 					Memory: resource.MustParse(memAsMIAllNs + "Mi"),
 				},
@@ -137,30 +133,20 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 	return ctrl.Result{}, nil
 }
 
-func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, cpu, mem int64) bool {
-	cpuUsage := sliceUsage.Cpu.MilliValue()
-	memUsage, _ := sliceUsage.Memory.AsInt64()
-	fmt.Println("Diff", sliceUsage.Cpu.String())
-	fmt.Println("memUsage", sliceUsage.Memory.String())
-
-	if calculatePercentageDiff(cpuUsage, cpu) > 5 || calculatePercentageDiff(memUsage, mem) > 5 {
+func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, currentcpu, currentmem resource.Quantity) bool {
+	memUsage := sliceUsage.Memory.ScaledValue(resource.Kilo)
+	cpuUsage := sliceUsage.Cpu.ScaledValue(resource.Nano)
+	fmt.Println("cpuUsage", cpuUsage)
+	fmt.Println("memUsage", memUsage)
+	curremtMemUsage := currentcpu.ScaledValue(resource.Kilo)
+	currentCPUUsage := currentmem.ScaledValue(resource.Nano)
+	fmt.Println("currentCPUUsage", currentCPUUsage)
+	fmt.Println("curremtMemUsage", curremtMemUsage)
+	if calculatePercentageDiff(cpuUsage, currentCPUUsage) > 5 || calculatePercentageDiff(memUsage, curremtMemUsage) > 5 {
+		fmt.Println("updating resource usage")
 		return true
 	}
 	return false
-}
-
-func getCPUandMemoryMetricsAsInt(podMetricsList []v1beta1.PodMetrics) (int64, int64) {
-	var nsTotalCPU, nsTotalMem int64
-	for _, podMetrics := range podMetricsList {
-		for _, container := range podMetrics.Containers {
-			usage := container.Usage
-			nowCpu := usage.Cpu().MilliValue()
-			nowMem, _ := usage.Memory().AsInt64()
-			nsTotalCPU += nowCpu
-			nsTotalMem += nowMem
-		}
-	}
-	return nsTotalCPU, nsTotalMem
 }
 
 func getCPUandMemoryMetricsResource(podMetricsList []v1beta1.PodMetrics) (resource.Quantity, resource.Quantity) {

@@ -24,6 +24,7 @@ import (
 	spokev1alpha1 "github.com/kubeslice/apis-ent/pkg/worker/v1alpha1"
 	kubeslicev1beta1 "github.com/kubeslice/worker-operator/api/v1beta1"
 	"github.com/kubeslice/worker-operator/internal/netop"
+	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 
 	"github.com/kubeslice/worker-operator/internal/router"
 )
@@ -49,4 +50,7 @@ type WorkerNetOpClientProvider interface {
 	UpdateSliceQosProfile(ctx context.Context, addr string, slice *kubeslicev1beta1.Slice) error
 	SendSliceLifeCycleEventToNetOp(ctx context.Context, addr string, sliceName string, eventType netop.EventType) error
 	SendConnectionContext(ctx context.Context, serverAddr string, gw *kubeslicev1beta1.SliceGateway, sliceGwNodePort int32) error
+}
+type MetricServerProvider interface {
+	GetNamespaceMetrics(namespace string) (*v1beta1.PodMetricsList, error)
 }
