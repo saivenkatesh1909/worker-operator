@@ -82,9 +82,9 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 		currentAllNsMem.Add(mem)
 	}
 
-	// if currentAllNsCPU == 0 && currentAllNsMem == 0 { // no current usage
-	// 	return ctrl.Result{}, nil
-	// }
+	if currentAllNsCPU.Equal(resource.Quantity{}) && currentAllNsMem.Equal(resource.Quantity{}) { // no current usage
+		return ctrl.Result{}, nil
+	}
 	updateResourceUsage := false
 	if slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus == nil {
 		slice.Status.SliceConfig.WorkerSliceResourceQuotaStatus = &spokev1alpha1.WorkerSliceResourceQuotaStatus{}
