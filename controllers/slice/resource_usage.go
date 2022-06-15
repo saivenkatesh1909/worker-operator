@@ -127,10 +127,10 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 			log.Error(err, "error updating hub worker slice resource quota")
 			return ctrl.Result{}, err
 		}
-		log.Info("updating resource usage to slice status config")
-		slice.Status.ConfigUpdatedOn = currentTime
-		r.Status().Update(ctx, slice)
 	}
+	log.Info("updating resource usage time to slice status config")
+	slice.Status.ConfigUpdatedOn = currentTime
+	r.Status().Update(ctx, slice)
 	return ctrl.Result{}, nil
 }
 
