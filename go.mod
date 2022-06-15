@@ -25,9 +25,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20210204223132-d90b2f705958
 	istio.io/client-go v1.9.0
-	k8s.io/api v0.24.0
-	k8s.io/apimachinery v0.24.0
-	k8s.io/client-go v0.24.0
-	k8s.io/metrics v0.24.0
+	k8s.io/api v0.24.1
+	k8s.io/apimachinery v0.24.1
+	k8s.io/client-go v0.24.1
+	k8s.io/metrics v0.24.1
 	sigs.k8s.io/controller-runtime v0.11.1
 )

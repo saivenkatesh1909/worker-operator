@@ -136,14 +136,15 @@ func (r *SliceReconciler) reconcileNamespaceResourceUsage(ctx context.Context, s
 
 func checkToUpdateControllerSliceResourceQuota(sliceUsage spokev1alpha1.Resource, currentcpu, currentmem resource.Quantity) bool {
 	memUsage := sliceUsage.Memory.ScaledValue(resource.Kilo)
-	cpuUsage := sliceUsage.Cpu.ScaledValue(resource.Nano)
 	fmt.Println("memUsage", memUsage)
-	fmt.Println("cpuUsage", cpuUsage)
 	curremtMemUsage := currentmem.ScaledValue(resource.Kilo)
-	currentCPUUsage := currentcpu.ScaledValue(resource.Nano)
-	fmt.Println("currentCPUUsage", currentCPUUsage)
 	fmt.Println("curremtMemUsage", curremtMemUsage)
-	if calculatePercentageDiff(cpuUsage, currentCPUUsage) > 5 || calculatePercentageDiff(memUsage, curremtMemUsage) > 5 {
+
+	cpuUsage := sliceUsage.Cpu.ScaledValue(resource.Nano)
+	fmt.Println("cpuUsage", cpuUsage)
+	currentCPUUsage := resource.NewMilliQuantity(currentcpu.MilliValue(), resource.DecimalSI)
+	fmt.Println("currentCPUUsage", currentCPUUsage)
+	if calculatePercentageDiff(cpuUsage, currentCPUUsage.ScaledValue(resource.Nano)) > 5 || calculatePercentageDiff(memUsage, curremtMemUsage) > 5 {
 		fmt.Println("updating resource usage")
 		return true
 	}
