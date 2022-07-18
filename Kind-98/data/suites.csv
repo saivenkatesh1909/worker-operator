@@ -1,0 +1,7 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Mon Jul 18 11:31:44 GMT 2022","Mon Jul 18 11:31:47 GMT 2022","3079","","Hub Suite","","Hub Suite","","[AfterSuite]",""
+"failed","Mon Jul 18 11:34:27 GMT 2022","Mon Jul 18 11:38:23 GMT 2022","236796","","Worker Suite","","Worker Suite","","[BeforeSuite]",""
+"failed","Mon Jul 18 11:31:44 GMT 2022","Mon Jul 18 11:33:49 GMT 2022","125215","","Hub Suite","","Hub Suite","","[It] Cluster CR tests Cluster CR validation Register worker cluster",""
+"passed","Mon Jul 18 11:31:44 GMT 2022","Mon Jul 18 11:32:13 GMT 2022","29576","","Hub Suite","","Hub Suite","","[BeforeSuite]",""
+"passed","Mon Jul 18 11:31:44 GMT 2022","Mon Jul 18 11:31:48 GMT 2022","4387","","Hub Suite","","Hub Suite","","[It] Cluster CR tests Cluster CR validation Creates cluster secrets",""
+"passed","Mon Jul 18 11:34:27 GMT 2022","Mon Jul 18 11:34:49 GMT 2022","22587","","Worker Suite","","Worker Suite","","[AfterSuite]",""
